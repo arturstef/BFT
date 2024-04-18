@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "biz"
+version = "0.1.0"
+description = ""
+authors = ["LeweLotki <stefanczyk@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+tk = "^0.1.0"
+pillow = "^10.3.0"
+numpy = "^1.26.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
