@@ -33,7 +33,11 @@ class LamportIterAlgorithm:
         while not self.isFinished:
             iteration += 1
             current_failure_rate = failure_rate_func(iteration)
-            print(current_failure_rate)
+            print(f'iteration {iteration} failure_rate: {current_failure_rate}')
+            vertex_faulty = 0
+            for vertex in self.graph.vertices:
+                if vertex.is_faulty: vertex_faulty += 1
+            print(f'number of faulty nodes: {vertex_faulty}')
             self.apply_failures(current_failure_rate)
             self.om_iter()
             self.checkIsFinished()

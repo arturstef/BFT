@@ -192,7 +192,10 @@ def run(algorithm, set1 = 3, set2 = 2):
             run_animation(g_copy)
         elif algorithm == 'lamport':
             algorithm = LamportIterAlgorithm(G[cur_i()])
-            result = algorithm.runAlgorithm(G[cur_i()], set2)
+            linear_increase = lambda iteration: min(0.01 + 0.005 * iteration, 1)
+            exponential_growth = lambda iteration: min(0.05 * (1.1 ** iteration), 1)
+
+            result = algorithm.runAlgorithm(G[cur_i()], set2, failure_rate_func=linear_increase)
             print (result[0])
             # for i in result[1]:
             #     print(i.get_operations())
