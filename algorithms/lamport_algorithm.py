@@ -1,35 +1,51 @@
 from algorithms.operations_batch import OperationsBatch
 from graph import Graph
 from vertex import Vertex
-
+import random
 
 class LamportIterAlgorithm:
   def __init__(self, graph):
-    self.graph = graph
-    self.stack = []
-    self.isFinished = False
-    self.verticesWithOpinion = []
-    self.raport = []
+        self.graph = graph
+        self.stack = []
+        self.isFinished = False
+        self.verticesWithOpinion = []
+        self.raport = []
 
-  def runAlgorithm(self, graph, depth = 1):
-    self.graph = graph
-    self.stack = []
-    commander = self.graph.vertices[0]
-    startOperationBatch = OperationsBatch('log')
-    startOperationBatch.add(f'Rozpoczęcie algorytmu Lamporta, z głębokością {depth}')
-    self.raport.append(startOperationBatch)
-    lieutenants = []
-    for v_id in self.graph.get_node_neighbours(commander.node_id):
-      lieutenants.append(self.graph.get_node_by_id(v_id))
-    if len(graph.vertices) > 0:
-      self.stack.append(StackRecord(commander, [], lieutenants, depth, "SEND"))
+  def runAlgorithm(self, graph, depth=1, failure_rate_func=None):
+        self.graph = graph
+        if failure_rate_func is None:
+            failure_rate_func = lambda x: 0.05 
+                
+        iteration = 0
+        current_failure_rate = failure_rate_func(iteration)
+        self.apply_failures(current_failure_rate) 
+        
+        self.stack = []
+        commander = self.graph.vertices[0]
+        startOperationBatch = OperationsBatch('log')
+        startOperationBatch.add(f'Start of Lamport algorithm, depth {depth}')
+        self.raport.append(startOperationBatch)
 
-    while not self.isFinished:
-      self.om_iter()
-      self.checkIsFinished()
-    result = self.checkForConsensus()
-    return result
-  
+        lieutenants = [self.graph.get_node_by_id(v_id) for v_id in self.graph.get_node_neighbours(commander.node_id)]
+        if self.graph.vertices:
+            self.stack.append(StackRecord(commander, [], lieutenants, depth, "SEND"))
+
+        while not self.isFinished:
+            iteration += 1
+            current_failure_rate = failure_rate_func(iteration)
+            print(current_failure_rate)
+            self.apply_failures(current_failure_rate)
+            self.om_iter()
+            self.checkIsFinished()
+        
+        return self.checkForConsensus()
+
+  def apply_failures(self, failure_rate):
+        """Apply failures based on the current failure rate to each node."""
+        for vertex in self.graph.vertices:
+            if not vertex.is_faulty and random.random() < failure_rate:
+                vertex.is_faulty = True
+
   def om_iter(self):
     record = self.stack.pop()
     firstOperationsBatch_log = OperationsBatch('log')

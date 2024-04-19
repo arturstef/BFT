@@ -208,7 +208,11 @@ def run(algorithm, set1 = 3, set2 = 2):
             run_animation(g_copy)
         elif algorithm == 'pbft':
             algorithm = PbftAlgorithm(G[cur_i()])
-            result = algorithm.runAlgorithm(G[cur_i()], set2)
+
+            linear_increase = lambda iteration: min(0.05 + 0.1 * iteration, 1)
+            exponential_growth = lambda iteration: min(0.05 * (1.1 ** iteration), 1)
+
+            result = algorithm.runAlgorithm(G[cur_i()], set2, failure_rate_func=linear_increase)
             print (result[0])
             # for i in result[1]:
             #     print(i.get_operations())
@@ -270,6 +274,7 @@ def create_new_tab():
         radiobutton.grid(row=i, column=1, sticky="e")
 '''
 
+# TODO
 def setup(scenario):
     global icon_true, icon_false, G
     if scenario == "Samoloty":
