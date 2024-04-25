@@ -5,6 +5,7 @@ from functools import partial
 from tkinter import *
 from tkinter import ttk
 
+
 from PIL import Image as PILImage
 from PIL import ImageTk
 
@@ -18,6 +19,8 @@ from graph_templates import *
 from logger import Logger
 from variables import *
 from vertex import Vertex
+from algorithms.lamport_zlosliwosci import LamportZlosliwosci
+
 
 V = [] #[[]]
 E = [] #[{}]
@@ -38,6 +41,7 @@ dots = {}
 desc_instances = []
 notebook = None
 window = None
+faliure_func = None
 
 def drag_start(event):
     global drag_index, startX, startY
@@ -174,7 +178,7 @@ def Knn(name: str): #rysuje i usuwa poprzedni rysunek
 
 
 def run(algorithm, set1 = 3, set2 = 2):
-    global G, result, algorithm_data, desc_instances
+    global G, result, algorithm_data, desc_instances, curren_algorithm
 
     switch_description_text(descriptions[algorithm])
 
@@ -191,16 +195,20 @@ def run(algorithm, set1 = 3, set2 = 2):
             algorithm_data = result
             run_animation(g_copy)
         elif algorithm == 'lamport':
-            algorithm = LamportIterAlgorithm(G[cur_i()])
-            linear_increase = lambda iteration: min(0.01 + 0.005 * iteration, 1)
-            exponential_growth = lambda iteration: min(0.05 * (1.1 ** iteration), 1)
+            #TO DO ZMIENIĆ NAZWY
+            if faliure_func is None:
+                algorithm = LamportIterAlgorithm(G[cur_i()])
+                result = algorithm.runAlgorithm(G[cur_i()], set2)
+            else:
+                algorithm = LamportZlosliwosci(G[cur_i()])
+                result = algorithm.runAlgorithm(G[cur_i()], set2,faliure_func)
 
-            result = algorithm.runAlgorithm(G[cur_i()], set2, failure_rate_func=linear_increase)
-            print (result[0])
-            # for i in result[1]:
-            #     print(i.get_operations())
+
+            #for i in result[1]:
+            #    print(i.get_operations())
             algorithm_data = result
             run_animation(g_copy)
+
         elif algorithm == 'q_voter':
             algorithm = QVoterModel(G)
             result = algorithm.runAlgorithm(G[cur_i()], set1, set2)
@@ -279,7 +287,7 @@ def create_new_tab():
 
 # TODO
 def setup(scenario):
-    global icon_true, icon_false, G
+    global icon_true, icon_false, G, faliure_func
     if scenario == "Samoloty":
         Knn("Planes")
         G[cur_i()].vertices[0].is_faulty = True
@@ -367,10 +375,13 @@ def create_window(w):
     option_menu = Menu(menubar, tearoff=0)
 
     menubar.add_cascade(label="Opcje", menu=option_menu)
+
     option_menu.add_command(label="Nowa zakładka", command=create_new_tab)
+
 
     full_menu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Grafy Pełne", menu=full_menu)
+
 
 
     for i in range(3,9):
@@ -399,6 +410,24 @@ def create_window(w):
 
     for option in ["20% wadliwych", "50% wadliwych", "80% wadliwych", "20% na tak", "50% na tak", "80% na tak"]:
         algorithm_options.add_command(label=option, command=partial(modify, option))
+
+    faliure_menu = Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Faliure options", menu=faliure_menu)
+    #TO DO ZMIENIĆ NA WŁAŚCIWE ZŁOŚLIWOŚCI
+    for faliures in ["faliure1","faliure2","defalut"]:
+        faliure_menu.add_command(label=faliures, command=partial(setup_faliures,faliures))
+
+def setup_faliures(faliures):
+    global faliure_func
+    if faliures == "faliure1":
+        faliure_func =  "faliure1"
+    elif faliures == "faliure2":
+        faliure_func = "faliure2"
+    elif faliures == "defalut":
+        faliure_func = None
+    else:
+        raise NotImplemented
+
 
 def run_animation(graph = None):
     global is_animated, G, algorithm_data, canvases, notebook, window, dots

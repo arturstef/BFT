@@ -93,7 +93,7 @@ class LamportIterAlgorithm:
     if not self.stack:
       self.isFinished = True
       
-  def checkForConsensus(self):
+  def checkForConsensus(self,graph):
     finalOpersBatch = OperationsBatch('log')
     opinions = []
     for vertex in self.graph.vertices:
