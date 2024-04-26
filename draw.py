@@ -414,14 +414,14 @@ def create_window(w):
     faliure_menu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Faliure options", menu=faliure_menu)
     #TO DO ZMIENIĆ NA WŁAŚCIWE ZŁOŚLIWOŚCI
-    for faliures in ["faliure1","faliure2","defalut"]:
+    for faliures in ["failure rate increase","message lost","defalut"]:
         faliure_menu.add_command(label=faliures, command=partial(setup_faliures,faliures))
 
 def setup_faliures(faliures):
     global faliure_func
-    if faliures == "faliure1":
+    if faliures == "failure rate increase":
         faliure_func =  "faliure1"
-    elif faliures == "faliure2":
+    elif faliures == "message lost":
         faliure_func = "faliure2"
     elif faliures == "defalut":
         faliure_func = None

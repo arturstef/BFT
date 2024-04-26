@@ -11,7 +11,7 @@ class LamportZlosliwosci(LamportIterAlgorithm):
           super().__init__(graph=graph)
 
 
-      def runAlgorithm(self, graph, depth = 1,faluire_func=None):
+      def runAlgorithm(self, graph, depth = 1, faluire_func=None):
           if faluire_func == "faliure1":
               linear_increase = lambda iteration: min(0.01 + 0.005 * iteration, 1)
               result = self.faliure_rate(graph=graph, depth = 1, failure_rate_func = linear_increase)
@@ -56,7 +56,7 @@ class LamportZlosliwosci(LamportIterAlgorithm):
               self.om_iter()
               self.checkIsFinished()
 
-          result = self.checkForConsensus()
+          result = self.checkForConsensus(graph)
           return result
 
       def apply_failures(self, failure_rate):

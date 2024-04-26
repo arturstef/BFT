@@ -29,7 +29,7 @@ class LamportIterAlgorithm:
     while not self.isFinished:
       self.om_iter()
       self.checkIsFinished()
-    result = self.checkForConsensus()
+    result = self.checkForConsensus(graph)
     return result
 
   def om_iter(self):
