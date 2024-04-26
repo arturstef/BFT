@@ -220,9 +220,6 @@ def run(algorithm, set1 = 3, set2 = 2):
         elif algorithm == 'pbft':
             algorithm = PbftAlgorithm(G[cur_i()])
 
-            linear_increase = lambda iteration: min(0.05 + 0.1 * iteration, 1)
-            exponential_growth = lambda iteration: min(0.05 * (1.1 ** iteration), 1)
-
             result = algorithm.runAlgorithm(G[cur_i()], set2)
             print (result[0])
             # for i in result[1]:
@@ -414,7 +411,7 @@ def create_window(w):
     faliure_menu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Faliure options", menu=faliure_menu)
     #TO DO ZMIENIĆ NA WŁAŚCIWE ZŁOŚLIWOŚCI
-    for faliures in ["failure rate increase","message lost","defalut"]:
+    for faliures in ["failure rate increase", "message lost", "trust levels", "defalut"]:
         faliure_menu.add_command(label=faliures, command=partial(setup_faliures,faliures))
 
 def setup_faliures(faliures):
@@ -423,6 +420,8 @@ def setup_faliures(faliures):
         faliure_func =  "faliure1"
     elif faliures == "message lost":
         faliure_func = "faliure2"
+    elif faliures == "trust levels":
+        faliure_func = "faliure3"
     elif faliures == "defalut":
         faliure_func = None
     else:

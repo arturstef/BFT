@@ -3,6 +3,7 @@ from algorithms.lamport_algorithm import LamportIterAlgorithm,StackRecord
 from graph import Graph
 from vertex import Vertex
 import random
+from numpy.random import uniform
 
 class LamportZlosliwosci(LamportIterAlgorithm):
     
@@ -17,8 +18,11 @@ class LamportZlosliwosci(LamportIterAlgorithm):
               result = self.faliure_rate(graph=graph, depth = 1, failure_rate_func = linear_increase)
 
           elif faluire_func == "faliure2":
-
               result = self.lost_message(graph=graph, depth=1, chance_for_loss= 0.20)
+
+          elif faluire_func == "faliure3":
+              result = self.trust_levels(graph=graph, depth=1)
+
           else:
               result = super().runAlgorithm(graph = graph, depth = 1)
 
@@ -152,3 +156,60 @@ class LamportZlosliwosci(LamportIterAlgorithm):
               finalOpersBatch.add(f'Konsensus nie został osiągnięty')
               self.raport.append(finalOpersBatch)
               return False, self.raport
+
+      def trust_levels(self, graph, depth=1):
+            self.graph = graph
+            for vertex in self.graph.vertices:
+                vertex.set_trust_level(uniform(0.5, 1.5))
+            print('im here')
+            self.stack = []
+            commander = self.graph.vertices[0]
+            startOperationBatch = OperationsBatch('log')
+            startOperationBatch.add(f'Start of Lamport algorithm with trust levels, depth {depth}')
+            self.raport.append(startOperationBatch)
+            lieutenants = [self.graph.get_node_by_id(v_id) for v_id in self.graph.get_node_neighbours(commander.node_id)]
+            if len(graph.vertices) > 0:
+                self.stack.append(StackRecord(commander, [], lieutenants, depth, "SEND"))
+
+            while not self.isFinished:
+                self.om_iter_with_trust_levels()
+                self.checkIsFinished()
+            result = self.checkForConsensus(graph)
+            return result
+
+      def om_iter_with_trust_levels(self):
+            record = self.stack.pop()
+            if record.phase == "SEND":
+                firstOperationsBatch_send = OperationsBatch('send')
+                firstOperationsBatch_set_opinion = OperationsBatch('set_opinion')
+                for vertex in record.lieutenants:
+                    commanderOpinion = record.commander.get_current_choice_sim()  # Get the opinion of the commander (possibly simulated for faults)
+                    # Store opinion along with the commander's trust level
+                    vertex.add_memory((commanderOpinion, record.commander.get_trust_level()))  
+
+                    firstOperationsBatch_send.add(f'Send;{record.commander.node_id},{vertex.node_id},opinion:{commanderOpinion}')
+
+                    if vertex not in self.verticesWithOpinion:
+                        vertex.set_current_choice(commanderOpinion)  # Optionally reflect the immediate choice
+                        self.verticesWithOpinion.append(vertex)
+                        firstOperationsBatch_set_opinion.add(f'Set_opinion;vertex:{vertex.node_id},opinion:{vertex.get_current_choice()}')
+
+                if record.m > 0:
+                    record.previous_commanders.append(record.commander)
+                    self.stack.append(StackRecord(record.commander, record.previous_commanders.copy(), record.lieutenants, record.m, "CHOOSE"))
+
+                    for vertex in record.lieutenants:
+                        lieutenants = self.getLieutenants(vertex, record.previous_commanders)
+                        if lieutenants:
+                            self.stack.append(StackRecord(vertex, record.previous_commanders.copy(), lieutenants, record.m - 1, "SEND"))
+                self.raport.append(firstOperationsBatch_send)
+                self.raport.append(firstOperationsBatch_set_opinion)
+            elif record.phase == "CHOOSE":
+                firstOperationsBatch_set_opinion = OperationsBatch('set_opinion')
+                for vertex in record.lieutenants:
+                    # Ensure choose_majority_weighted is only called when memory is properly formatted
+                    if all(isinstance(item, tuple) for item in vertex.get_memory()):
+                        vertex.choose_majority_weighted()
+                    firstOperationsBatch_set_opinion.add(f'Set_opinion;vertex:{vertex.node_id},opinion:{vertex.get_current_choice()}')
+                self.raport.append(firstOperationsBatch_set_opinion)
+
