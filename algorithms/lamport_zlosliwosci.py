@@ -22,11 +22,9 @@ class LamportZlosliwosci(LamportIterAlgorithm):
 
           elif faluire_func == "faliure3":
               result = self.trust_levels(graph=graph, depth=1)
-          elif faluire_func == "failure4":
-              result = self.nierzetelni_agenci(graph=graph, depth=1)
-
+              
           elif faluire_func == "faliure4":
-              result = self.trust_levels(graph=graph, depth=1)
+              result = self.nierzetelni_agenci(graph=graph, depth=1)
 
           else:
               result = super().runAlgorithm(graph = graph, depth = 1)
@@ -183,6 +181,7 @@ class LamportZlosliwosci(LamportIterAlgorithm):
             return result
 
       def nierzetelni_agenci(self, graph, depth=1):
+        print('im na')
         self.graph = graph
         self.stack = []
         commander = self.graph.vertices[0]
@@ -209,8 +208,9 @@ class LamportZlosliwosci(LamportIterAlgorithm):
             for vertex in record.lieutenants:
                 commanderOpinion = record.commander.get_current_choice_sim()
                 # Occasionally send false instead of true
-                if commanderOpinion and random.random() < 0.1:  # 10% chance to send false
+                if commanderOpinion and random.random() < 0.5:  # 10% chance to send false
                     commanderOpinion = not commanderOpinion
+                    print(f'commander opinion: {commanderOpinion}')
                 vertex.add_memory(commanderOpinion)
 
                 firstOperationsBatch_send.add(f'Send: {record.commander.node_id} -> {vertex.node_id}, opinion: {commanderOpinion}')
