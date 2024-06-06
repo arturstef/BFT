@@ -172,44 +172,8 @@ class LamportZlosliwosci(LamportIterAlgorithm):
                 self.stack.append(StackRecord(commander, [], lieutenants, depth, "SEND"))
 
             while not self.isFinished:
-                self.om_iter_with_trust_levels()
+                self.om_iter()
                 self.checkIsFinished()
             result = self.checkForConsensus(graph)
             return result
-
-      def om_iter_with_trust_levels(self):
-            record = self.stack.pop()
-            if record.phase == "SEND":
-                firstOperationsBatch_send = OperationsBatch('send')
-                firstOperationsBatch_set_opinion = OperationsBatch('set_opinion')
-                for vertex in record.lieutenants:
-                    commanderOpinion = record.commander.get_current_choice_sim()  # Get the opinion of the commander (possibly simulated for faults)
-                    # Store opinion along with the commander's trust level
-                    vertex.add_memory((commanderOpinion, record.commander.get_trust_level()))  
-
-                    firstOperationsBatch_send.add(f'Send;{record.commander.node_id},{vertex.node_id},opinion:{commanderOpinion}')
-
-                    if vertex not in self.verticesWithOpinion:
-                        vertex.set_current_choice(commanderOpinion)  # Optionally reflect the immediate choice
-                        self.verticesWithOpinion.append(vertex)
-                        firstOperationsBatch_set_opinion.add(f'Set_opinion;vertex:{vertex.node_id},opinion:{vertex.get_current_choice()}')
-
-                if record.m > 0:
-                    record.previous_commanders.append(record.commander)
-                    self.stack.append(StackRecord(record.commander, record.previous_commanders.copy(), record.lieutenants, record.m, "CHOOSE"))
-
-                    for vertex in record.lieutenants:
-                        lieutenants = self.getLieutenants(vertex, record.previous_commanders)
-                        if lieutenants:
-                            self.stack.append(StackRecord(vertex, record.previous_commanders.copy(), lieutenants, record.m - 1, "SEND"))
-                self.raport.append(firstOperationsBatch_send)
-                self.raport.append(firstOperationsBatch_set_opinion)
-            elif record.phase == "CHOOSE":
-                firstOperationsBatch_set_opinion = OperationsBatch('set_opinion')
-                for vertex in record.lieutenants:
-                    # Ensure choose_majority_weighted is only called when memory is properly formatted
-                    if all(isinstance(item, tuple) for item in vertex.get_memory()):
-                        vertex.choose_majority_weighted()
-                    firstOperationsBatch_set_opinion.add(f'Set_opinion;vertex:{vertex.node_id},opinion:{vertex.get_current_choice()}')
-                self.raport.append(firstOperationsBatch_set_opinion)
 
