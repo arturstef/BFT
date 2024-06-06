@@ -23,6 +23,9 @@ class LamportZlosliwosci(LamportIterAlgorithm):
           elif faluire_func == "faliure3":
               result = self.trust_levels(graph=graph, depth=1)
 
+          elif faluire_func == "faliure4":
+              result = self.trust_levels(graph=graph, depth=1)
+
           else:
               result = super().runAlgorithm(graph = graph, depth = 1)
 
