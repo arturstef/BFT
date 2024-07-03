@@ -62,7 +62,7 @@ class LamportZlosliwosci(LamportIterAlgorithm):
                   if vertex.is_faulty: vertex_faulty += 1
               print(f'number of faulty nodes: {vertex_faulty}')
               self.apply_failures(current_failure_rate)
-              self.om_iter()
+              self.om_iter_failure_rate(failure_rate_func=failure_rate_func, iter=iteration)
               self.checkIsFinished()
 
           result = self.checkForConsensus(graph)
@@ -179,7 +179,7 @@ class LamportZlosliwosci(LamportIterAlgorithm):
             while not self.isFinished:
                 self.om_iter()
                 self.checkIsFinished()
-            result = self.checkForConsensus(graph)
+            result = self.checkForConsensus_trust_levels(graph)
             return result
 
       def nierzetelni_agenci(self, graph, depth=1):
@@ -322,3 +322,65 @@ class LamportZlosliwosci(LamportIterAlgorithm):
 
         result = self.checkForConsensus(graph)
         return result
+
+
+      def checkForConsensus_trust_levels(self, graph):
+          finalOpersBatch = OperationsBatch('log')
+          opinions = []
+          for vertex in self.graph.vertices:
+              opinion = 1 if vertex.get_current_choice() else -1
+              opinion *= vertex.trust_level
+              opinions.append(opinion)  # real opinion
+              
+          print(opinions)
+          opion_sum = sum(opinions)
+          if opion_sum >= 0:
+              print("Consensus")
+              finalOpersBatch.add(f'Konsensus został osiągnięty, decyzja {True}')
+              self.raport.append(finalOpersBatch)
+              return True, self.raport
+          else:
+              print("No consensus")
+              finalOpersBatch.add(f'Konsensus nie został osiągnięty')
+              self.raport.append(finalOpersBatch)
+              return False, self.raport
+              
+      def om_iter_failure_rate(self, failure_rate_func=None, iter=1):
+        record = self.stack.pop()
+        firstOperationsBatch_log = OperationsBatch('log')
+        if record.phase == "SEND":
+            firstOperationsBatch_send = OperationsBatch('send')
+            firstOperationsBatch_set_opinion = OperationsBatch('set_opinion')
+            firstOperationsBatch_log.add(f'dowódca: {record.commander.node_id}, zastępcy: {[v.node_id for v in record.lieutenants]}, głębokość stosu: {record.m}')
+            for vertex in record.lieutenants:
+                commanderOpinion = record.commander.get_current_choice_sim()
+                if random.random() < failure_rate_func(iter):
+                    commanderOpinion = not commanderOpinion
+                vertex.add_memory(commanderOpinion)
+                firstOperationsBatch_send.add(f'Sender;vertex:{record.commander.node_id},opinion:{commanderOpinion}')
+                firstOperationsBatch_send.add(f'Send;{record.commander.node_id},{vertex.node_id},opinion:{commanderOpinion}')
+                if vertex not in self.verticesWithOpinion:
+                    vertex.set_current_choice(record.commander.get_current_choice_sim()) # if faulty, send opposite
+                    self.verticesWithOpinion.append(vertex)
+                    firstOperationsBatch_set_opinion.add(f'Set_opinion;vertex:{vertex.node_id},opinion:{vertex.get_current_choice()}')
+
+            if record.m > 0:
+                record.previous_commanders.append(record.commander)
+                self.stack.append(StackRecord(record.commander, record.previous_commanders.copy(), record.lieutenants, record.m, "CHOOSE"))
+
+                for vertex in record.lieutenants:
+                    lieutenants = self.getLieutenants(vertex, record.previous_commanders)
+                    if lieutenants:
+                        self.stack.append(StackRecord(vertex, record.previous_commanders.copy(), lieutenants, record.m - 1, "SEND"))
+                self.raport.append(firstOperationsBatch_send)
+                self.raport.append(firstOperationsBatch_set_opinion)
+
+        elif record.phase == "CHOOSE":
+            firstOperationsBatch_set_opinion = OperationsBatch('set_opinion')
+            for vertex in record.lieutenants:
+                vertex.choose_majority()
+                firstOperationsBatch_set_opinion.add(f'Set_opinion;vertex:{vertex.node_id},opinion:{vertex.get_current_choice()}')
+            self.raport.append(firstOperationsBatch_set_opinion)
+    
+        self.raport.append(firstOperationsBatch_log)
+        self.checkIsFinished()
