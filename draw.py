@@ -411,20 +411,22 @@ def create_window(w):
     faliure_menu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Faliure options", menu=faliure_menu)
     #TO DO ZMIENIĆ NA WŁAŚCIWE ZŁOŚLIWOŚCI
-    for faliures in ["failure rate increase", "message lost", "trust levels","unreliable agents","defalut"]:
+    for faliures in ["failure rate increase", "message lost", "trust levels","unreliable agents","unreliable agents 2","default"]:
         faliure_menu.add_command(label=faliures, command=partial(setup_faliures,faliures))
 
 def setup_faliures(faliures):
     global faliure_func
     if faliures == "failure rate increase":
-        faliure_func =  "faliure1"
+        faliure_func = "faliure1"
     elif faliures == "message lost":
         faliure_func = "faliure2"
     elif faliures == "trust levels":
         faliure_func = "faliure3"
     elif faliures == "unreliable agents":
         faliure_func = "faliure4"
-    elif faliures == "defalut":
+    elif faliures == "unreliable agents 2":
+        faliure_func = "faliure5"
+    elif faliures == "default":
         faliure_func = None
     else:
         raise NotImplemented
